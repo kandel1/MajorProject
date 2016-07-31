@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="{{ url_for('static',filename= 'css/bootstrap.min.css') }}" rel=stylesheet> 
+<link rel="shortcut icon" href="{{ url_for('static', filename ='favicon.ico') }}" >
+</head>
+<body>
+
+<h2>Register Driver<h2>
+<h3>
+Please, Enter the following information to register driver to our system.
+</h3>
+
+
+<div class="container">
+  <div class="jumbotron">
+  <form action="" class="form-inline" method ="post">
+    <h5>Full Name : 
+    <input type="text" class ="form-control" placeholder="Enter the full name" value ="{{request.form.full_name}}" name="full_name"> </h5>
+    <h5>License Number : 
+    <input type="text" class ="form-control" placeholder="Enter the license number" value ="{{request.form.license_number}}" name="license_number"> </h5>
+    <h5>Address : 
+    <input type="text" class ="form-control" placeholder="Enter the address" value ="{{request.form.address}}" name="address"> </h5>
+    <h5>Mobile Number : 
+    <input type="text" class ="form-control" placeholder="Enter the mobile number" value ="{{request.form.mobile_number}}" name="mobile_number"> </h5>
+    <h5>Username : 
+    <input type="text" class ="form-control" placeholder="Enter the username" value ="{{request.form.username}}" name="username"> </h5>
+    <h5>Password : 
+    <input type="text" class ="form-control" placeholder="Enter the password" value ="{{request.form.password}}" name="password"> </h5>
+    <h5>Taxi Number : 
+    <input type="text"class ="form-control" placeholder="Enter the taxi number. " value ="{{request.form.taxi_number}}" name="taxi_number"> </h5>
+     <center> 
+     <input type="submit" class ="btn btn-default" value="Submit">
+     </center>
+
+ 
+
+ 
+</form>
+  </div>
+ 
+</div>
+
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+   
+    <script src="js/bootstrap.min.js"></script>
+</body>
+</html>
+

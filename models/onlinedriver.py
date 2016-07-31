@@ -1,0 +1,8 @@
+class onlinedriver(object):
+
+    def __init__(self, username, latitude, longitude):
+        
+        self.username = username
+        self.latitude = latitude
+        self.longitude = longitude
+       
