@@ -1,0 +1,30 @@
+
+<!DOCTYPE html>
+<html lang=en>
+<head>
+
+<meta charset=utf-8>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+ <link href="{{ url_for('static',filename= 'css/bootstrap.min.css') }}" rel=stylesheet> 
+
+</head> 
+<body>
+<header>
+
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">
+        <img style="max-width:80px; margin-top: -22px;" src="{{ url_for('static',filename= 'images/logo.jpg') }}"  >
+      </a>
+      </div>
+      <div class="page-header">
+      <h1 >Chalak <br><small>A complete Taxi Rental App</small></h1>
+    </div>
+
+</header>
+
+ {% block body %}
+ {% endblock %}
+
+
+ </body>
+ </html>

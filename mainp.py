@@ -1,33 +1,47 @@
-from flask import Flask, render_template, flash, request , url_for, session, jsonify
+from flask import Flask, g, render_template, flash, request , url_for, session, jsonify ,redirect, session , escape
 from dbConnect import connection
 from passlib.hash import sha256_crypt
 from MySQLdb import escape_string as thwart
 import gc
-
-
-
-class onlinedriver(object):
-
-    def __init__(self, username, latitude, longitude):
-        
-        self.username = username
-        self.latitude = latitude
-        self.longitude = longitude
-
+from collections import OrderedDict
+import json
+from decimal import *
+from jinja2 import Template
+from distance import calculatedistance
+from random import randint
+from sparrow import sparrow , sparrow2
+from functools import wraps
+from authentication import login_required
 
 app = Flask(__name__)
 
-@app.route('/')
-def main():
-    return "index"
 
+
+def login_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'username' in session:
+            return f(*args, **kwargs)
+        else:
+            return redirect(url_for("login"))
+
+    return wrap
+
+
+# for website
+
+
+
+ 
 @app.route('/register', methods = ['GET','POST'])
+@login_required
 def register():
 
     try:
        
         if request.method == "POST":
-            entered_full_name = request.form['username']
+            
+            entered_full_name = request.form['full_name']
             entered_license_number = request.form['license_number'] 
             entered_address = request.form['address'] 
             entered_mobile_number = request.form['mobile_number'] 
@@ -35,48 +49,52 @@ def register():
             entered_password = request.form['password'] 
             entered_taxi_number = request.form['taxi_number'] 
             c, conn = connection()
-            #x = c.execute("SELECT * FROM Drivers WHERE username = (%s)", (entered_username))
-            
-
-            #if int(x) == 1:
-             #   return render_template('register.html')
-                
-            #else:
-            #c.execute("INSERT INTO Driver (full_name,license_number,address,mobile_number,username,password,taxi_number) VALUES (%s,%s,%s,%s,%s,%s,%s)",thwart(entered_full_name), thwart(entered_license_number),thwart(entered_address),thwart(entered_mobile_number),thwart(entered_username),thwart(entered_password),thwart(entered_taxi_number))
             c.execute("""INSERT INTO Driver (full_name,license_number,address,mobile_number,username,password,taxi_number) VALUES (%s,%s,%s,%s,%s,%s,%s)""",(entered_full_name, entered_license_number,entered_address,entered_mobile_number,entered_username,entered_password,entered_taxi_number))
-            conn.commit()
-                
+            conn.commit()              
             c.close()
             conn.close()
             gc.collect()
+            return redirect(url_for(".dashboard"))
             
-                #session['logged_in'] = True
-                #session['username'] = entered_username 
-            return "Register bhayo." + entered_full_name
             
+            
+
         else:    
+
             return render_template("register.html")
             
             
     except Exception as e:
         
-        return render_template("register.html")
+        return e
 
-   
+
+@app.route("/")
 @app.route('/login', methods = ['GET','POST'])
 def login():
    
     try:
+        users = [{"username":"sandesh","password":"kandel"},
+        {"username":"sujit","password":"bhandari"},
+        {"username":"sankalpa","password":"aryal"},
+        {"username":"sudip","password":"paudel"}]
+
+
         if request.method == "POST":
             attempted_username = request.form['username']
             attempted_password = request.form['password']
-                   
-            if attempted_username == "admin" and attempted_password == "password":
-                return "you are correct my boy"
-                
-            else:
-                flash('Login failed. Please enter the correct username and password.')
-                return render_template("login.html")
+            
+            for i in users:       
+                if attempted_username == i['username'] and attempted_password == i['password']:
+                    session['username'] = attempted_username
+                    #session['logged_in'] = True
+                    #return "Hello " + attempted_username
+                    return redirect(url_for(".dashboard"))
+
+                    #return render_template("dashboard.html", username = i['username'] , password = i['password'])
+             
+            return render_template("login.html")   
+               
                 
         else:
            return render_template("login.html")
@@ -86,103 +104,847 @@ def login():
         return render_template("login.html")
 
 
+@app.route('/logout')
+@login_required
+def logout():
 
-@app.route('/findmeataxi')
-def findmeataxi():
-
-    c , conn = connection()
-    c.execute("SELECT * FROM OnlineDriver")
-    results = c.fetchall()
-    for row in results:
-
-        username = row[0]
-        longitude = row[1]
-        latitude = row[2]
+    session.pop('username', None)
+    #session.pop('logged_in', None)
+    return redirect(url_for('login'))
 
 
-    conn.commit()         
-    c.close()
-    conn.close()
-    gc.collect()
-       
-    list = [
-          {
-          "mobile":"9845153645"
-          },
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    try:
+
+        username = session['username']
+        return render_template('dashboard.html',username = username)
+    
+           
+
+    except Exception as e:
         
-          {
-             "username":username,
-             "longitude": longitude,
-             "latitude": latitude,
+        return "error"
+
+
+
+
+@app.route('/listofdrivers/', methods = ['GET','POST'])
+@login_required
+def listofdrivers():
+    try:
+        if request.method == "GET":  
+            c , conn = connection()
+            c.execute("SELECT * from Driver")
+            drivers = []
+            
+            x = c.fetchall()
+            
+            for row in x:
+                z= {
+                "full_name": row[0],
+                "license_number": row[1],
+                "address": row[2],
+                "mobile_number": row[3],
+                "username": row[4],
+                "password": row[5],
+                "taxi_number": row[6]
+                }
+                drivers.append(z)
+
+            conn.commit()
+            c.close()
+            conn.close()
+            gc.collect()
+            return render_template("listofdrivers.html", drivers = drivers)
+
+        else:
+            info = request.form['x']
+            c , conn = connection()
+            c.execute("SELECT * from Driver where full_name = %s or mobile_number = %s or taxi_number = %s or username = %s",(info,info,info,info))
+            drivers = []
+            
+            x = c.fetchall()
+            
+            for row in x:
+                z= {
+                "full_name": row[0],
+                "license_number": row[1],
+                "address": row[2],
+                "mobile_number": row[3],
+                "username": row[4],
+                "password": row[5],
+                "taxi_number": row[6]
+                }
+                drivers.append(z)
+
+            conn.commit()
+            c.close()
+            conn.close()
+            gc.collect()
+            return render_template("listofdrivers.html", drivers = drivers)
+
+
+
+    except Exception as e:
+        
+        return "error"
+
+
+@app.route('/listofcustomers/', methods = ['GET','POST'])
+@login_required
+def listofcustomers():
+    try:
+        if request.method == "GET":  
+            c , conn = connection()
+            c.execute("SELECT * from Customer")
+            customers = []
+            x = c.fetchall()
+            
+            for row in x:
+                z= {
+                "full_name": row[0],
+                "mobile_number": row[1]
+                
+                }
+                customers.append(z)
+
+            conn.commit()
+            c.close()
+            conn.close()
+            gc.collect()
+            return render_template("listofcustomers.html", customers = customers)
+
+        else:
+            info = request.form['x']
+            c , conn = connection()
+            c.execute("SELECT * from Customer where full_name = %s or mobile_number = %s",(info,info))
+            customers = []
+            
+            x = c.fetchall()
+            
+            for row in x:
+                z= {
+                "full_name": row[0],                
+                "mobile_number": row[1]
+                
+                }
+                customers.append(z)
+
+            conn.commit()
+            c.close()
+            conn.close()
+            gc.collect()
+            return render_template("listofcustomers.html", customers = customers)
+
+
+
+    except Exception as e:
+        
+        return "error"
+
+
+@app.route('/delete/<username>')
+@login_required
+def delete(username):
+
+    c,conn = connection()
+    c.execute("SELECT * from Driver where username = %s ",[username])
+    x=c.fetchone()
+    conn.commit()
+    c.close()
+    gc.collect()
+    return render_template("delete.html", driver = x)
+
+
+@app.route('/finaldelete/<username>')
+@login_required
+def finaldelete(username):
+
+    c,conn = connection()
+    c.execute("DELETE from Driver where username = %s ",[username])
+    conn.commit()
+    c.close()
+    gc.collect()
+    return redirect(url_for(".listofdrivers"))
+
+
+@app.route('/details/<username>')
+@login_required
+def details(username):
+
+    c,conn = connection()
+    c.execute("SELECT * from Driver where username = %s ",[username])
+    x=c.fetchone()
+    conn.commit()
+    c.close()
+    gc.collect()
+    return render_template("details.html", driver = x)
+
+
+@app.route('/update/<username>', methods = ["POST","GET"])
+@login_required
+def update(username):
+    if request.method == "POST":
+        entered_license_number = request.form['license_number'] 
+        entered_address = request.form['address'] 
+        entered_mobile_number = request.form['mobile_number'] 
+        entered_password = request.form['password'] 
+        entered_taxi_number = request.form['taxi_number'] 
+
+        c, conn = connection()
+        c.execute("""UPDATE Driver SET license_number = %s , address  = %s , mobile_number  = %s , password  = %s , taxi_number  = %s where username = %s""",(entered_license_number,entered_address,entered_mobile_number,entered_password,entered_taxi_number,username))
+        conn.commit()              
+        c.close()
+        conn.close()
+        gc.collect()
+        return redirect(url_for(".details", username = username ))
+           
+    else:
+        return render_template("update.html", username = username)     
+            
+            
+
+
+@app.route('/listofonlinedrivers/')
+@login_required
+def listofonlinedrivers(): 
+    try:
+
+        c , conn = connection()
+        c.execute("SELECT * from OnlineDriver")
+        onlinedrivers = []
+        x = c.fetchall()
+        conn.commit()
+        c.close()
+        gc.collect()
+        for row in x:
+            z= {
+            "username": row[0]
+                }
+            onlinedrivers.append(z)
+
+        #correct upto above line. Any mistakes that will occur will be from below here
+
+        onlinedriversinfo = []
+        for a in onlinedrivers:
+            c,conn = connection()
+            username = a['username']
+            
+            c.execute("SELECT * from Driver where username = %s ",[username])
+            y=c.fetchone()
+            conn.commit()
+            c.close()
+            gc.collect()
+            d={
+                "full_name": y[0],
+                "mobile_number": y[3],
+                "license_number": y[1],    
+                "taxi_number": y[6]
+            }
+            onlinedriversinfo.append(d)      
+         
+
+        
+        return render_template("listofonlinedrivers.html", drivers = onlinedriversinfo)
+
+
+    except Exception as e:
+        
+        return "error"
+
+
+@app.route('/listofblockedcustomer/')
+@login_required
+def listofblockedcustomer(): 
+    try:
+
+        c , conn = connection()
+        c.execute("SELECT * from Block")
+        blocked = []
+        x = c.fetchall()
+        conn.commit()
+        c.close()
+        gc.collect()
+        for row in x:
+            z= {
+            "mobile_number": row[0]
+                }
+            blocked.append(z)
+
+      
+
+        blockedcustomers = []
+        for a in blocked:
+            c,conn = connection()
+            mobile_number = a['mobile_number']
+            
+            c.execute("SELECT * from Customer where mobile_number = %s ",[mobile_number])
+            y=c.fetchone()
+            conn.commit()
+            c.close()
+            gc.collect()
+            d={
+                "full_name": y[0],                 
+                "mobile_number": y[1]
+            }
+            blockedcustomers.append(d)      
+         
+
+        #return json.dumps(blockedcustomers , indent = 0)
+        return render_template("listofblockedcustomer.html", blockedcustomers = blockedcustomers)
+
+
+    except Exception as e:
+        
+        return "error"
+
+
+@app.route('/listofrequestedblock/')
+@login_required
+def listofrequestedblock(): 
+    try:
+
+        c , conn = connection()
+        c.execute("SELECT * from RequestToBlock")
+        block = []
+        x = c.fetchall()
+        conn.commit()
+        c.close()
+        gc.collect()
+        for row in x:
+            z= {
+            "mobile_number": row[0],
+            "username": row[1]
+                }
+            block.append(z)
+
+      
+        info = []
+        for a in block:
+            mobile_number = a['mobile_number']
+            username = a['username']
+            c,conn = connection()
+            c.execute("SELECT * from Customer where mobile_number = %s ",[mobile_number])
+            y=c.fetchone()
+            conn.commit()
+            c.close()
+            gc.collect()
+            c,conn = connection()
+            c.execute("SELECT * from Driver where username = %s ",[username])
+            z=c.fetchone()
+            conn.commit()
+            c.close()
+            gc.collect()
+            d={
+                "full_name": y[0],           
+                
+                "dfull_name": z[0]
+            }
+            info.append(d)      
+         
+
+        #return json.dumps(info , indent = 0)
+        return render_template("listofrequestedblock.html", info = info)
+
+
+    except Exception as e:
+        
+        return "error"
+
+
+#-----------------------------------------------------------------------------------------------------------
+# for android chalak costumer app
+
+
+
+#works fine
+@app.route('/getmeacode',methods = ['POST'])
+def getmeacode():
+    mobile_number = request.form['mobile_number']
+    c,conn = connection()
+    c.execute("SELECT * from Block where mobile_number = %s",[mobile_number])
+    x= c.fetchone()
+    conn.commit()
+    c.close()
+    gc.collect()
+
+    if len(x) == 0:
+        c, conn = connection()
+        c.execute("SELECT * from Customer where mobile_number = %s",[mobile_number])
+        x= c.fetchone()
+        conn.commit()
+        c.close()
+        gc.collect()
+
+        if len(x) == 0:
+            code= randint(10000,99999)
+            c = str(code)
+            sparrow(mobile_number , c)
+            c, conn = connection()
+            c.execute("DELETE from ForCode where mobile_number = %s",[mobile_number])
+            conn.commit()
+            c.close()
+            gc.collect()
+            c,conn = connection()
+            c.execute("INSERT INTO ForCode (mobile_number, code) VALUES (%s,%s)",(mobile_number, code))
+            conn.commit()
+            c.close()
+            gc.collect()
+            return "success"
+        else:
+            full_name = x[0]
+            return "Your number is already registered in the name of " + full_name     
+
+
+    else:
+
+        return "Your number is in the block list."  
+
+@app.route('/forgotpassword',methods = ['POST'])
+def forgotpassword():
+    mobile_number = request.form['mobile_number']
+    c, conn = connection()
+    c.execute("SELECT * from Customer where mobile_number = %s",[mobile_number])
+    x= c.fetchone()
+    conn.commit()
+    c.close()
+    gc.collect()
+
+
+    if len(x) == 0:
+        return "Your number is not registered." 
+        
+    else:
+        password = x[2]
+        sparrow2(mobile_number , password)
+        return "Password is sent to your mobile number."
+              
+
+
+#works fine
+@app.route('/registeracustomer' , methods = ["POST"])
+def registeracustomer():
+    full_name = request.form['full_name']
+    mobile_number = request.form['mobile_number']
+    password = request.form['password']
+    code = int(request.form['code'])
+
+    c,conn = connection()
+    c.execute("SELECT * from ForCode WHERE mobile_number = %s",[mobile_number])
+    x = c.fetchone()
+    conn.commit()
+    c.close()
+    gc.collect()
+    if int(x[1]) == code:
+        c,conn = connection()
+        c.execute("INSERT INTO Customer (full_name, mobile_number, password) VALUES (%s, %s, %s)",(full_name , mobile_number ,password) )
+        conn.commit()
+        c.close()
+        gc.collect()
+        return "success"
+    else:
+        return "failed"
+
+
+@app.route('/customerlogin', methods = ["POST"])
+def customerlogin():
+    mobile_number = request.form['mobile_number']
+    password = request.form['password']
+    c,conn = connection()
+    c.execute("SELECT * from Block where mobile_number = %s",[mobile_number])
+    x= c.fetchone()
+    conn.commit()
+    c.close()
+    gc.collect()
+
+    if len(x) == 0:
+        c,conn = connection()
+        c.execute("SELECT * from Customer where mobile_number = %s",[mobile_number])
+        x= c.fetchone()
+        if x[2] == password:
+            return "success"
+        else:
+            return "failed"
+
+    else:
+        return "Your number is in the Block List."
+
+
+# done!
+@app.route('/willselectataxi', methods = ['POST','GET'])
+def willselectataxi():
+    try:
+        if request.method == "POST":
+            latitude = float(request.form['latitude'])
+            longitude = float(request.form['longitude'])
+
+        else:
+            latitude = float(request.args['latitude'])
+            longitude = float(request.args['longitude'])
+
+
+        w = latitude + float(0.15060)
+        x = latitude - float(0.15060)
+        y = longitude + float(0.15060)
+        z = longitude - float(0.15060)
+
+        c , conn = connection()
+        c.execute("""SELECT * FROM OnlineDriver WHERE longitude BETWEEN %s AND %s AND latitude BETWEEN %s AND %s and with_customer = %s """,(z,y,x,w,False))
+        #c.execute("""SELECT * FROM OnlineDriver""")
+        y = []
+        x = c.fetchall()
+        #for each in x:
+        for row in x:
+            z= {
+            "username": row[0],
+            "longitude": row[1],
+            "latitude": row[2]
+            }
+            y.append(z)
+
+        w= {"markers":y}
+        
+        conn.commit()         
+        c.close()
+        conn.close()
+        gc.collect()
+        return json.dumps(w, indent=0)
              
-          }
-                     
-    ]
-    #return "hello"
-    return jsonify(results =list)
+               
+    except Exception as e:
+            
+            return e
 
+
+            
+@app.route('/findmeataxi', methods = ['POST','GET'])
+def findmeataxi():
+    try:
+        if request.method == "POST":
+            latitude = float(request.form['latitude'])
+            longitude = float(request.form['longitude'])
+
+
+        else:
+           latitude = float(request.args['latitude'])
+           longitude = float(request.args['longitude'])
+            
+        w = latitude + float(0.15060)
+        x = latitude - float(0.15060)
+        y = longitude + float(0.15060)
+        z = longitude - float(0.15060)
+
+        c , conn = connection()
+        #c.execute("""SELECT * FROM OnlineDriver WHERE longitude BETWEEN %s AND %s AND latitude BETWEEN %s AND %s and with_customer = %s """,(z,y,x,w,False))
+        c.execute("""SELECT * FROM OnlineDriver""")
+        
+        x = c.fetchall()
+        conn.commit()         
+        c.close()
+        conn.close()
+        gc.collect()
+
+        
+        shortest_distance = 10000
+        
+        for row in x:
+            d = calculatedistance(longitude,latitude,row[1],row[2])
+            if d < shortest_distance:
+                shortest_distance = d
+                nearest_user = row[0]
+
+            else:
+                pass
+
+        c , conn = connection()
+        c.execute("""SELECT * FROM Driver WHERE username = %s """,[nearest_user])               
+        x = c.fetchone()
+        conn.commit()         
+        c.close()
+        conn.close()
+        gc.collect()
+        driver1 = []
+        driver= {
+        "full_name": x[0],
+        "license_number": x[1],
+        "address": x[2],
+        "mobile_number": x[3],
+        "taxi_number" : x[6]
+        }
+
+        driver1.append(driver)
+           
+
+        w= {"driver":driver1}      
+        return json.dumps(w, indent=0)
+
+
+        return "No drivers."
+                
+               
+    except Exception as e:
+            
+            return e
+            
+
+#done if certain error occurs it is easy
+
+@app.route('/showprofile', methods = ['POST'])
+def showprofile():
     
+    try:
+        
+        username = request.form['username']
+        c,conn = connection()
+        c.execute("SELECT * FROM Driver where username = %s",[username])
+        x= c.fetchone()
+           
 
-@app.route('/goonline')
+        driver = {
+                    "full_name" : x[0],
+                    "license_number" : x[1],
+                    "address" : x[2],
+                    "mobile_number" : x[3],
+                    "taxi_number" : x[6]
+
+        }
+        jsdriver = {"driver":driver}
+
+        conn.commit()
+        c.close()
+        gc.collect()
+        return json.dumps(jsdriver,indent = 0)
+
+    except Exception as e:
+
+        return e
+
+@app.route('/callnow', methods = ["POST"])
+def callnow():
+    mobile_number = request.form('mobile_number')
+    username = request.form('username')
+    c,conn = connection()
+    timeofride = datetime.datetime.now()
+    c.execute("INSERT INTO Ride (mobile_number, username , timeofride) values (%s,%s)",(mobile_number, username,timeofride))
+    conn.commit()
+    c.close()
+    gc.collect()
+    return "success"
+
+@app.route('/mydrivers',methods = ["POST"])
+def mydrivers():
+    mobile_number = request.form['mobile_number']
+    c,conn = connection()
+    c.execute("SELECT * FROM Ride where mobile_number = %s)",[mobile_number])
+    x = c.fetchall()
+    conn.commit()
+    c.close()
+    gc.collect()
+    
+    driver = []
+    for row in x:
+        z= {
+            "username": row[1],
+            "timeofride": row[2]
+                }
+        driver.append(z)
+ 
+
+    driversinfo = []
+    for a in driver:
+        c,conn = connection()
+        username = a['username']
+        
+        c.execute("SELECT * from Driver where username = %s ",[username])
+        y=c.fetchone()
+        conn.commit()
+        c.close()
+        gc.collect()
+        d={
+            "full_name": y[0],
+            "mobile_number": y[3],
+            "taxi_number": y[6],
+            "timeofride": a['timeofride']
+        }
+        driversinfo.append(d)  
+
+    drivers = {"drivers": driversinfo}    
+
+    return json.dumps(drivers,indent = 0)
+
+
+
+
+
+#-----------------------------------------------------------------------------------------------------------
+
+#for android app chalak driver
+
+@app.route('/driverlogin', methods = ["POST"])
+def driverlogin():
+    mobile_number = request.form['username']
+    password = request.form['password']
+    c,conn = connection()
+    c.execute("SELECT * from Customer where mobile_number = %s",[mobile_number])
+    x= c.fetchone()
+    if x[2] == password:
+        return "successful"
+    else:
+        return "unsuccessful"
+        
+
+@app.route('/goonline',methods= ['POST'])
 def goonline():
-    username = "sudip235"
-    longitude = 27.6956
-    latitude = 85.8495
-
-    c, conn = connection()
-    
-    c.execute("""INSERT INTO OnlineDriver (username,longitude,latitude) VALUES (%s,%s,%s)""",(username,longitude,latitude))
+    username = request.form['username']
+    latitude = float(request.form['latitude'])
+    longitude = float(request.form['longitude']) 
+    c, conn =connection()
+    c.execute("DELETE from OnlineDriver where username = %s",[username])
+    c.close()
     conn.commit()
-        
+    gc.collect()
+    c, conn = connection()    
+    c.execute("""INSERT INTO OnlineDriver (username,longitude,latitude,with_customer) VALUES (%s,%s,%s,%s)""",(username,longitude,latitude,False))
+    conn.commit()        
     c.close()
     conn.close()
     gc.collect()
+    return "went online now"
 
-    return "went online"
+@app.route('/gotapassenger', methods = ['POST'])
+def gotapassenger():
+    username = request.form['username']
+    c, conn = connection()
+    c.execute("UPDATE OnlineDriver SET with_costumer = %s  WHERE username = %s ",(True, username))
+    conn.commit()
+    c.close()
+    conn.close()
+    gc.collect()
+    return "You have a costumer"
+
+
+@app.route('/completedaride', methods = ['POST'])
+def completedaride():
+    username = request.form['username']
+    c, conn = connection()
+    c.execute("UPDATE OnlineDriver SET with_costumer = %s  WHERE username = %s ",(False, username))
+    conn.commit()
+    c.close()
+    conn.close()
+    gc.collect()
+    return "You completed a ride."  
 
 
 
-@app.route('/gooffline')
+@app.route('/gooffline', methods = ['POST'])
 def gooffline():
-    username = "sudip235"
-    c, conn = connection()
-    
-    c.execute("""DELETE FROM OnlineDriver WHERE username = %s""",(username,))
-   
-    conn.commit()
-        
+    username = request.form['username']
+    c, conn = connection()    
+    c.execute("""DELETE FROM OnlineDriver WHERE username = %s""",(username,))   
+    conn.commit()        
     c.close()
     conn.close()
     gc.collect()
-
-
-    return "went offline"
+    return "you just went offline."
 
 
 
-@app.route('/updateme')
+@app.route('/updateme', methods = ['POST'])
 def updateme():
-    username = "sudip235"
-    longitude = 27.695545
-    latitude = 85.849534534
-
-    c, conn = connection()
-    c.execute("""UPDATE OnlineDriver SET longitude =%s  , latitude =%s  WHERE username = %s""",(longitude,latitude,username,))
+    username = request.form['username']
+    latitude = float(request.form['latitude'])
+    longitude = float(request.form['longitude']) 
+    c, conn =connection()
+    c.execute("DELETE from OnlineDriver where username = %s",[username])
+    c.close()
     conn.commit()
-        
+    gc.collect()
+    c, conn = connection()
+    c.execute("""UPDATE OnlineDriver SET longitude =%s  , latitude =%s , with_costumer = %s WHERE username = %s""",(longitude,latitude,False ,username,))
+    conn.commit()
     c.close()
     conn.close()
     gc.collect()
+    return "Your location has been updated."
 
 
 
+@app.route('/mycustomers',methods = ["POST"])
+def mycustomers():
+    username = request.form['username']
+    c,conn = connection()
+    c.execute("SELECT * FROM Ride where username = %s)",[username])
+    x = c.fetchall()
+    conn.commit()
+    c.close()
+    gc.collect()
+    
+    customer = []
+    for row in x:
+        z= {
+            "mobile_number": row[0],
+            "timeofride": row[1]
+            }
+        customer.append(z)
+ 
 
-    return "updated location"
+    customersinfo = []
+    for a in customer:
+        c,conn = connection()
+        mobile_number = a['mobile_number']
+        
+        c.execute("SELECT * from Customer where mobile_number = %s ",[mobile_number])
+        y=c.fetchone()
+        conn.commit()
+        c.close()
+        gc.collect()
+        c={
+            "full_name": y[0],
+            "mobile_number": mobile_number,
+            "timeofride": a['timeofride']
+            
+        }
+        customersinfo.append(c)  
+
+    customers = {"customers": customersinfo}    
+
+    return json.dumps(customers,indent = 0)
 
 
+@app.route('/requesttoblock',methods = ['POST'])
+def requesttoblock():
 
+    username = request.form['username']
+    mobile_number = request.form['mobile_number']
+    c, conn = connection()
+    c.execute("SELECT * from RequestToBlock where mobile_number = %s ",[mobile_number])
+    x= c.fetchall()
+    conn.commit()
+    c.close()
+    gc.collect()
+    if len(x) == 4:
+        c,conn = connection()
+        c.execute("INSERT into Block (mobile_number) values (%s)",(mobile_number))
+        conn.commit()
+        c.close()
+        gc.collect()
+
+    
+    else:
+        c,conn = connection()
+        c.execute("INSERT into RequestToBlock (mobile_number, requested_by) values (%s,%s)",(mobile_number,username))
+        conn.commit()
+        c.close()
+        gc.collect()
+
+
+    return "Your request to block "+ mobile_number + "has been considered."
 
 
 
 if __name__ == "__main__":
+    app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+    app.jinja_env.add_extension('jinja2.ext.loopcontrols')
     app.run()

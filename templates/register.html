@@ -1,51 +1,63 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset=utf-8>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="{{ url_for('static',filename= 'css/bootstrap.min.css') }}" rel=stylesheet> 
-<link rel="shortcut icon" href="{{ url_for('static', filename ='favicon.ico') }}" >
-</head>
-<body>
-
-<h2>Register Driver<h2>
-<h3>
-Please, Enter the following information to register driver to our system.
-</h3>
+{% extends "layout3.html" %}
+{% block body %}
 
 
-<div class="container">
-  <div class="jumbotron">
+
+<style>
+body {
+    background-image: url("{{ url_for('static',filename= 'images/background.jpg') }}");
+}
+</style>
+<header>
+ 
+<h2 style="color:blue;" align="center" > <b>Register The Driver</b> </h2>
+</button>
+</header>
+
+
+
+<br>
+
+
   <form action="" class="form-inline" method ="post">
-    <h5>Full Name : 
-    <input type="text" class ="form-control" placeholder="Enter the full name" value ="{{request.form.full_name}}" name="full_name"> </h5>
-    <h5>License Number : 
-    <input type="text" class ="form-control" placeholder="Enter the license number" value ="{{request.form.license_number}}" name="license_number"> </h5>
-    <h5>Address : 
-    <input type="text" class ="form-control" placeholder="Enter the address" value ="{{request.form.address}}" name="address"> </h5>
-    <h5>Mobile Number : 
-    <input type="text" class ="form-control" placeholder="Enter the mobile number" value ="{{request.form.mobile_number}}" name="mobile_number"> </h5>
-    <h5>Username : 
-    <input type="text" class ="form-control" placeholder="Enter the username" value ="{{request.form.username}}" name="username"> </h5>
-    <h5>Password : 
-    <input type="text" class ="form-control" placeholder="Enter the password" value ="{{request.form.password}}" name="password"> </h5>
-    <h5>Taxi Number : 
-    <input type="text"class ="form-control" placeholder="Enter the taxi number. " value ="{{request.form.taxi_number}}" name="taxi_number"> </h5>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="FullName"><b>FullName</b></label><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" class ="form-control" placeholder="Full Name" value ="{{request.form.full_name}}" name="full_name"><br><br>
+    
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="Liscence Number"><b>Licensce Number</b></label><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" class ="form-control" placeholder="Enter the license number" value ="{{request.form.license_number}}" name="license_number"> 
+    <br><br>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="Address"><b>Address</b></label> <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" class ="form-control" placeholder="Enter the address" value ="{{request.form.address}}" name="address">
+   <br><br>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="Mobile Number"><b> Mobile Number</b></label><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" class ="form-control" placeholder="Enter the mobile number" value ="{{request.form.mobile_number}}" name="mobile_number"> 
+    <br><br>
+
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="Username"><b>Username</b></label><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" class ="form-control" placeholder="Enter the username" value ="{{request.form.username}}" name="username"> <br><br>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="Password"><b>Password</b></label><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" class ="form-control" placeholder="Enter the password" value ="{{request.form.password}}" name="password"> <br><br>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<label for="Taxi Number"><b>Taxi Number </b><br>
+
+    <input type="text"class ="form-control" placeholder="Enter the taxi number" value ="{{request.form.taxi_number}}" name="taxi_number">
+    <br><br>
+    
      <center> 
-     <input type="submit" class ="btn btn-default" value="Submit">
-     </center>
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button type="submit" class ="btn btn-success"> <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span> Submit </button></center>
+
 
  
 
  
 </form>
-  </div>
+
  
-</div>
 
- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-   
-    <script src="js/bootstrap.min.js"></script>
-</body>
-</html>
 
+
+
+{% endblock %}

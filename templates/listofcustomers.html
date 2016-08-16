@@ -1,0 +1,50 @@
+{% extends "layout3.html" %}
+{% block body %}
+
+<div class="jumbotron">
+<header>
+
+<h1 style="color:grey;" align="center"><b> Registerd Customers </b></h1>
+
+</header>
+
+<br> <br> <br>
+<form action="" class="form-inline" method ="post">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <label for="FullName"><b>Enter the information of a customer </b></label>
+    &nbsp;&nbsp;<input type="text" class ="form-control" placeholder="Enter the information of a customer" value ="{{request.form.x}}" name="x">
+
+
+ 
+     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button type="submit" class ="btn btn-success"> <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span> Search </button>
+
+   
+    </form>
+<table class="table table-bordered">
+<tr class="active">
+    <th>Full Name</th>
+    
+    <th>Mobile Number</th>
+    
+    
+  </tr>
+  {% for customer in customers %}
+  <tr>
+    <td class="active">{{ customer.full_name }}</td>
+    
+     
+     <td class="active">{{ customer.mobile_number }}</td>
+     
+    
+     
+  </tr>
+  {%endfor%}
+  
+  </tr>
+
+</table>
+</div>
+
+{% endblock %}

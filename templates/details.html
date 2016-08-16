@@ -1,0 +1,28 @@
+{%extends "layout3.html"%}
+{%block body%}
+
+
+
+this is the profile of the driver you just clicked
+
+
+<br/><br/><br/>
+
+Full Name : {{ driver[0] }} <br/>
+License Number :               {{ driver[1] }} <br/>
+Address :            {{ driver[2] }} <br/>
+Mobile Number :       {{ driver[3] }} <br/>
+Username :      {{ driver[4] }} <br/>
+Password :   {{ driver[5] }} <br/>
+Taxi Number :        {{ driver[6] }} <br/>
+
+
+<a href = "{{ url_for(".delete",username = driver[4])}}"> {{ driver.full_name }}<button type="submit" class ="btn btn-alert"> <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span> Delete </button></center> </a>
+
+
+<a href = "{{ url_for(".update",username = driver[4])}}"> {{ driver.full_name }}<button type="submit" class ="btn btn-success"> <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span> Update </button></center> </a>
+
+
+
+
+{% endblock %}

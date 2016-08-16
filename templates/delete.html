@@ -1,0 +1,19 @@
+{%extends "layout3.html"%}
+{%block body%}
+
+
+
+Are you sure you want to delete  {{ driver[0] }} ? <br/>
+License Number :               {{ driver[1] }} <br/>
+Address :            {{ driver[2] }} <br/>
+Mobile Number :       {{ driver[3] }} <br/>
+Username :      {{ driver[4] }} <br/>
+Password :   {{ driver[5] }} <br/>
+Taxi Number :        {{ driver[6] }} <br/>
+
+
+<a href = "{{ url_for(".finaldelete",username = driver[4])}}"> <button type="submit" class ="btn btn-success"> <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span> Delete </button></center> </a>
+
+
+
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "layout3.html" %}
+{% block body %}
+
+<div class="jumbotron">
+<header>
+
+<h1 style="color:grey;" align="center"><b> Drivers which are currently online. </b></h1>
+
+</header>
+
+<br> <br> <br>
+<table class="table table-bordered">
+<tr class="active">
+    <th><center>Full Name</center></th>
+     <th><center>Mobile Number</center></th>
+      <th><center>License Number</center></th>
+       <th><center>Taxi Number</center></th>
+    
+   
+  </tr>
+  {% for driver in drivers %}
+  <tr>
+    <td class="active"><center>{{ driver.full_name }}</center></td>
+    <td class="active"><center>{{ driver.mobile_number }}</center></td>
+    <td class="active"><center>{{ driver.license_number }}</center></td>
+    <td class="active"><center>{{ driver.taxi_number }}</center></td>
+
+    
+    
+    
+  </tr>
+  {%endfor%}
+  
+  </tr>
+
+</table>
+</div>
+</body>
+</html>
+{% endblock %}
