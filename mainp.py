@@ -12,10 +12,16 @@ from random import randint
 from sparrow import sparrow , sparrow2
 from functools import wraps
 from authentication import login_required
+from flask_googlemaps import GoogleMaps
+from flask_googlemaps import Map, icons
 
 app = Flask(__name__)
 
+# you can set key as config
+app.config['GOOGLEMAPS_KEY'] = "AIzaSyAZzeHhs-8JZ7i18MjFuM35dJHq70n3Hx4"
 
+# you can also pass key here
+GoogleMaps(app, key="AIzaSyAZzeHhs-8JZ7i18MjFuM35dJHq70n3Hx4")
 
 def login_required(f):
     @wraps(f)
@@ -353,6 +359,81 @@ def listofonlinedrivers():
     except Exception as e:
         
         return "error"
+
+
+
+# Here lies the code for displaying online drivers in map:
+
+@app.route('/onlinedriversmap')
+@login_required
+def onlinedriversmap():
+    try:
+        c , conn = connection()
+        c.execute("""SELECT * FROM OnlineDriver""")
+        y = []
+        x = c.fetchall()
+        for row in x:
+            username = row[0]
+            c , conn = connection()
+            c.execute("""SELECT * FROM Driver where username = %s""",[username])
+            x=c.fetchone()
+            conn.commit()
+            c.close()
+            gc.collect()
+            full_name = x[0]
+            address = x[2]
+            mobile_number = x[3]
+            z= {
+            'icon': '//maps.google.com/mapfiles/ms/icons/green-dot.png',
+            'title': 'Information Of Driver',
+            'lat': row[2],
+            'lng': row[1],
+            'infobox': (
+                "Name: " +full_name + "<br/>" +
+                "Address: " +address + "<br/>" +
+                "Mobile Number: " + mobile_number + "<br/>" 
+                
+                )
+            }
+            y.append(z)
+        
+        conn.commit()         
+        c.close()
+        conn.close()
+        gc.collect()
+             
+        
+
+
+        fullmap = Map(
+            identifier="fullmap",
+            varname="fullmap",
+            style=(
+                "height:100%;"
+                "width:100%;"
+                "top:10;"
+                "left:0;"
+                "position:absolute;"
+                "z-index:200;"
+            ),
+            lat=27.7,
+            lng=85.2891,
+            markers=y,
+            #maptype = "TERRAIN",
+            #zoom="100"
+        )
+        return render_template('onlinedriversmap.html', fullmap=fullmap)
+
+    except Exception as e:
+        
+        return "error"
+
+
+#Here ends the code for displaying online drivers in map:
+
+
+
+
 
 
 @app.route('/listofblockedcustomer/')
@@ -947,4 +1028,4 @@ def requesttoblock():
 if __name__ == "__main__":
     app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
     app.jinja_env.add_extension('jinja2.ext.loopcontrols')
-    app.run()
+    app.run(debug=True, use_reloader=True)
