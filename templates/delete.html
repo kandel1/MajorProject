@@ -1,19 +1,24 @@
 {%extends "layout3.html"%}
 {%block body%}
 
+<h2><center>Delete a Driver</center></h2>
+<br/><br/><br/>
+<div class="row">
+<div class="col-sm-2"></div>
+<div class="col-sm-5">
+<h3><b>Are you sure you want to delete  {{ driver[0] }} ? </b></h3><br/><br/>
+<b>License Number :          </b>     {{ driver[1] }} <br/><br/>
+<b>Address :        </b>    {{ driver[2] }} <br/><br/>
+<b>Mobile Number :   </b>    {{ driver[3] }} <br/><br/>
+<b>Username :  </b>    {{ driver[4] }} <br/><br/>
+<b>Password : </b>  {{ driver[5] }} <br/><br/>
+<b>Taxi Number :  </b>      {{ driver[6] }} <br/><br/>
 
-
-Are you sure you want to delete  {{ driver[0] }} ? <br/>
-License Number :               {{ driver[1] }} <br/>
-Address :            {{ driver[2] }} <br/>
-Mobile Number :       {{ driver[3] }} <br/>
-Username :      {{ driver[4] }} <br/>
-Password :   {{ driver[5] }} <br/>
-Taxi Number :        {{ driver[6] }} <br/>
 
 
 <a href = "{{ url_for(".finaldelete",username = driver[4])}}"> <button type="submit" class ="btn btn-success"> <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span> Delete </button></center> </a>
 
-
+</div>
+</div>
 
 {% endblock %}

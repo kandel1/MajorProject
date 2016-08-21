@@ -1,3 +1,4 @@
+import os
 from flask import Flask, g, render_template, flash, request , url_for, session, jsonify ,redirect, session , escape
 from dbConnect import connection
 from passlib.hash import sha256_crypt
@@ -14,6 +15,9 @@ from functools import wraps
 from authentication import login_required
 from flask_googlemaps import GoogleMaps
 from flask_googlemaps import Map, icons
+from cloudinary.uploader import upload
+from cloudinary.utils import cloudinary_url
+import urllib
 
 app = Flask(__name__)
 
@@ -22,6 +26,8 @@ app.config['GOOGLEMAPS_KEY'] = "AIzaSyAZzeHhs-8JZ7i18MjFuM35dJHq70n3Hx4"
 
 # you can also pass key here
 GoogleMaps(app, key="AIzaSyAZzeHhs-8JZ7i18MjFuM35dJHq70n3Hx4")
+
+os.environ['CLOUDINARY_URL']="cloudinary://418193537422982:ayEj_qE71n2sYdQWcgg3qi9YWjo@instantum"
 
 def login_required(f):
     @wraps(f)
@@ -36,8 +42,6 @@ def login_required(f):
 
 # for website
 
-
-
  
 @app.route('/register', methods = ['GET','POST'])
 @login_required
@@ -50,20 +54,73 @@ def register():
             entered_full_name = request.form['full_name']
             entered_license_number = request.form['license_number'] 
             entered_address = request.form['address'] 
-            entered_mobile_number = request.form['mobile_number'] 
+            entered_mobile_number = request.form['mobile_number']                        
             entered_username = request.form['username'] 
             entered_password = request.form['password'] 
-            entered_taxi_number = request.form['taxi_number'] 
+            entered_taxi_number = request.form['taxi_number']
+            file = request.files['file']
+            
+            
             c, conn = connection()
-            c.execute("""INSERT INTO Driver (full_name,license_number,address,mobile_number,username,password,taxi_number) VALUES (%s,%s,%s,%s,%s,%s,%s)""",(entered_full_name, entered_license_number,entered_address,entered_mobile_number,entered_username,entered_password,entered_taxi_number))
+            c.execute("""Select * From Driver where mobile_number = %s""",[entered_mobile_number])
+            x= c.fetchone()
+            c.close() 
+            conn.commit()              
+            gc.collect()
+
+            if x:
+                flash("This Mobile Number is already taken")
+                return render_template("register.html")
+
+            else:
+                pass
+
+            
+            c, conn = connection()
+            c.execute("""Select * From Driver where username = %s""",[entered_username])
+            x=c.fetchone()
             conn.commit()              
             c.close()
-            conn.close()
             gc.collect()
-            return redirect(url_for(".dashboard"))
+            if x:
+                flash("This Username is already taken")
+                return render_template("register.html")
+
+            else:
+                pass
+
+            c, conn = connection()
+            c.execute("""Select * From Driver where taxi_number = %s""",[entered_taxi_number])
+            x=c.fetchone()
+            conn.commit()              
+            c.close()
+            gc.collect()
+
+            if x:
+                flash("This Taxi Number is already taken")
+                return render_template("register.html")
+
+            else:
+                pass 
+
+
             
-            
-            
+            if file: 
+                upload_result = upload(file, public_id = entered_username)
+                photo_url1 = str(cloudinary_url(entered_username+ ".jpg"))
+                photo_url = photo_url1[2:-6]               
+                c, conn = connection()
+                c.execute("""INSERT INTO Driver (full_name,license_number,address,mobile_number,username,password,taxi_number,profile_photo) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",(entered_full_name, entered_license_number,entered_address,entered_mobile_number,entered_username,entered_password,entered_taxi_number,photo_url))
+                conn.commit()              
+                c.close()
+                gc.collect()
+                return redirect(url_for(".dashboard"))  
+
+            else:    
+
+                return render_template("register.html") 
+ 
+   
 
         else:    
 
@@ -75,7 +132,7 @@ def register():
         return e
 
 
-@app.route("/")
+@app.route("/", methods = ['GET','POST'])
 @app.route('/login', methods = ['GET','POST'])
 def login():
    
@@ -142,7 +199,7 @@ def listofdrivers():
     try:
         if request.method == "GET":  
             c , conn = connection()
-            c.execute("SELECT * from Driver")
+            c.execute("SELECT * from Driver ")
             drivers = []
             
             x = c.fetchall()
@@ -154,14 +211,14 @@ def listofdrivers():
                 "address": row[2],
                 "mobile_number": row[3],
                 "username": row[4],
-                "password": row[5],
+               "password": row[5],
                 "taxi_number": row[6]
                 }
                 drivers.append(z)
 
             conn.commit()
             c.close()
-            conn.close()
+           
             gc.collect()
             return render_template("listofdrivers.html", drivers = drivers)
 
@@ -187,7 +244,7 @@ def listofdrivers():
 
             conn.commit()
             c.close()
-            conn.close()
+            
             gc.collect()
             return render_template("listofdrivers.html", drivers = drivers)
 
@@ -218,7 +275,7 @@ def listofcustomers():
 
             conn.commit()
             c.close()
-            conn.close()
+            
             gc.collect()
             return render_template("listofcustomers.html", customers = customers)
 
@@ -240,7 +297,7 @@ def listofcustomers():
 
             conn.commit()
             c.close()
-            conn.close()
+            
             gc.collect()
             return render_template("listofcustomers.html", customers = customers)
 
@@ -286,7 +343,8 @@ def details(username):
     conn.commit()
     c.close()
     gc.collect()
-    return render_template("details.html", driver = x)
+    photo_url = x[7]
+    return render_template("details.html", driver = x, photo_url = photo_url)
 
 
 @app.route('/update/<username>', methods = ["POST","GET"])
@@ -300,10 +358,38 @@ def update(username):
         entered_taxi_number = request.form['taxi_number'] 
 
         c, conn = connection()
+        c.execute("""Select * From Driver where mobile_number = %s""",[entered_mobile_number])
+        x= c.fetchone()
+        c.close() 
+        conn.commit()              
+        gc.collect()
+
+        if x:
+            flash("This Mobile Number is already taken")
+            return render_template("register.html")
+
+        else:
+            pass
+
+        
+        c, conn = connection()
+        c.execute("""Select * From Driver where taxi_number = %s""",[entered_taxi_number])
+        x=c.fetchone()
+        conn.commit()              
+        c.close()
+        gc.collect()
+        if x:
+            flash("This Taxi Number is already taken")
+            return render_template("register.html")
+
+        else:
+            pass
+
+        c, conn = connection()
         c.execute("""UPDATE Driver SET license_number = %s , address  = %s , mobile_number  = %s , password  = %s , taxi_number  = %s where username = %s""",(entered_license_number,entered_address,entered_mobile_number,entered_password,entered_taxi_number,username))
         conn.commit()              
         c.close()
-        conn.close()
+        
         gc.collect()
         return redirect(url_for(".details", username = username ))
            
@@ -383,23 +469,24 @@ def onlinedriversmap():
             full_name = x[0]
             address = x[2]
             mobile_number = x[3]
+            photo_url = x[7]
             z= {
             'icon': '//maps.google.com/mapfiles/ms/icons/green-dot.png',
             'title': 'Information Of Driver',
             'lat': row[2],
             'lng': row[1],
             'infobox': (
-                "Name: " +full_name + "<br/>" +
-                "Address: " +address + "<br/>" +
-                "Mobile Number: " + mobile_number + "<br/>" 
-                
+                "<b>Name:</b> " +full_name + "<br/>" +
+                "<b>Address:</b> " +address + "<br/>" +
+                "<b>Mobile Number:</b> " + mobile_number + "<br/>"
+                "<img src = "+photo_url+" height=""126"" width=""150"">"
                 )
             }
             y.append(z)
         
         conn.commit()         
         c.close()
-        conn.close()
+        
         gc.collect()
              
         
@@ -583,6 +670,7 @@ def getmeacode():
 
         return "Your number is in the block list."  
 
+
 @app.route('/forgotpassword',methods = ['POST'])
 def forgotpassword():
     mobile_number = request.form['mobile_number']
@@ -640,7 +728,12 @@ def customerlogin():
     c.close()
     gc.collect()
 
-    if len(x) == 0:
+    if x:
+        return "Your number is in the Block List."
+
+        
+    else:
+        
         c,conn = connection()
         c.execute("SELECT * from Customer where mobile_number = %s",[mobile_number])
         x= c.fetchone()
@@ -649,8 +742,6 @@ def customerlogin():
         else:
             return "failed"
 
-    else:
-        return "Your number is in the Block List."
 
 
 # done!
@@ -658,12 +749,26 @@ def customerlogin():
 def willselectataxi():
     try:
         if request.method == "POST":
+            mobile_number = request.form['mobile_number']
             latitude = float(request.form['latitude'])
             longitude = float(request.form['longitude'])
 
         else:
             latitude = float(request.args['latitude'])
             longitude = float(request.args['longitude'])
+
+        c,conn = connection()
+        c.execute("DELETE from OnlineCustomer where mobile_number = %s",[mobile_number])
+        c.close()
+        conn.commit()
+        gc.collect()
+        
+        c,conn = connection()
+        c.execute("INSERT into OnlineCustomer values(%s,%s,%s)",(mobile_number,latitude,longitude))
+        c.close()
+        conn.commit()
+        gc.collect()
+
 
 
         w = latitude + float(0.15060)
@@ -689,7 +794,7 @@ def willselectataxi():
         
         conn.commit()         
         c.close()
-        conn.close()
+       
         gc.collect()
         return json.dumps(w, indent=0)
              
@@ -704,6 +809,7 @@ def willselectataxi():
 def findmeataxi():
     try:
         if request.method == "POST":
+            mobile_number = request.form['mobile_number']
             latitude = float(request.form['latitude'])
             longitude = float(request.form['longitude'])
 
@@ -711,6 +817,19 @@ def findmeataxi():
         else:
            latitude = float(request.args['latitude'])
            longitude = float(request.args['longitude'])
+
+
+        c,conn = connection()
+        c.execute("DELETE from OnlineCustomer where mobile_number = %s",[mobile_number])
+        c.close()
+        conn.commit()
+        gc.collect()
+
+        c,conn = connection()
+        c.execute("INSERT into OnlineCustomer values(%s,%s,%s)",(mobile_number,latitude,longitude))
+        c.close()
+        conn.commit()
+        gc.collect()
             
         w = latitude + float(0.15060)
         x = latitude - float(0.15060)
@@ -724,7 +843,7 @@ def findmeataxi():
         x = c.fetchall()
         conn.commit()         
         c.close()
-        conn.close()
+        
         gc.collect()
 
         
@@ -744,7 +863,7 @@ def findmeataxi():
         x = c.fetchone()
         conn.commit()         
         c.close()
-        conn.close()
+        
         gc.collect()
         driver1 = []
         driver= {
@@ -788,7 +907,8 @@ def showprofile():
                     "license_number" : x[1],
                     "address" : x[2],
                     "mobile_number" : x[3],
-                    "taxi_number" : x[6]
+                    "taxi_number" : x[6],
+                    "username" : x[4]
 
         }
         jsdriver = {"driver":driver}
@@ -804,11 +924,13 @@ def showprofile():
 
 @app.route('/callnow', methods = ["POST"])
 def callnow():
-    mobile_number = request.form('mobile_number')
-    username = request.form('username')
+    if request.method == "POST":
+        mobile_number = request.form('mobile_number')
+        username = request.form('username')
+
     c,conn = connection()
     timeofride = datetime.datetime.now()
-    c.execute("INSERT INTO Ride (mobile_number, username , timeofride) values (%s,%s)",(mobile_number, username,timeofride))
+    c.execute("INSERT INTO Ride (mobile_number, username , timeofride) values (%s,%s,%s)",(mobile_number, username,timeofride))
     conn.commit()
     c.close()
     gc.collect()
@@ -857,6 +979,30 @@ def mydrivers():
 
 
 
+@app.route('/showinformationofride' , methods =["POST"])
+def showinformationofride():
+    mobile_number = request.form['mobile_number']
+
+    c, conn = connection()
+    c.execute("SELECT * from Ride where mobile_number = %s ORDER BY timeofride DESC  ",[mobile_number])
+    x=c.fetchone()
+    conn.commit()
+    c.close()
+    gc.collect()
+    informationofride2 = []
+    informationofride1={
+    "current_driver" : x[0],
+    "started_time" : x[1],
+    "distance" : x[2],
+    "duration_of_ride" : x[3],
+    "fare" : x[4]
+    }
+    informationofride2.append(informationofride1)
+
+    informationofride = {"informationofride":informationofride2}
+
+    return json.dumps(informationofride,indent = 0)
+
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -865,13 +1011,13 @@ def mydrivers():
 
 @app.route('/driverlogin', methods = ["POST"])
 def driverlogin():
-    mobile_number = request.form['username']
+    username = request.form['username']
     password = request.form['password']
     c,conn = connection()
-    c.execute("SELECT * from Customer where mobile_number = %s",[mobile_number])
+    c.execute("SELECT * from Driver where username = %s",[username])
     x= c.fetchone()
     if x[2] == password:
-        return "successful"
+        return "successfull"
     else:
         return "unsuccessful"
         
@@ -890,30 +1036,51 @@ def goonline():
     c.execute("""INSERT INTO OnlineDriver (username,longitude,latitude,with_customer) VALUES (%s,%s,%s,%s)""",(username,longitude,latitude,False))
     conn.commit()        
     c.close()
-    conn.close()
+    
     gc.collect()
     return "went online now"
 
 @app.route('/gotapassenger', methods = ['POST'])
 def gotapassenger():
     username = request.form['username']
+
     c, conn = connection()
     c.execute("UPDATE OnlineDriver SET with_costumer = %s  WHERE username = %s ",(True, username))
     conn.commit()
     c.close()
-    conn.close()
+   
     gc.collect()
     return "You have a costumer"
 
-
+#currently working on
 @app.route('/completedaride', methods = ['POST'])
 def completedaride():
     username = request.form['username']
+    distance = request.form['distance']
+    time = request.form['time']
+    fare = request.form['fare']
+
+    c, conn = connection()
+    c.execute("SELECT * from Ride where username = %s ORDER BY timeofride DESC  ",[username])
+    x=c.fetchone()
+    conn.commit()
+    c.close()
+    
+    gc.collect()
+    current_customer = x[5]
+    
+    c,conn = connection()
+    c.execute("UPDATE Ride set distance = %s , time = %s , fare = %s where username = %s and mobile_number = %s ",(distance,time,fare,username,current_customer))
+    conn.commit()
+    c.close()    
+    gc.collect()
+
+
     c, conn = connection()
     c.execute("UPDATE OnlineDriver SET with_costumer = %s  WHERE username = %s ",(False, username))
     conn.commit()
     c.close()
-    conn.close()
+    
     gc.collect()
     return "You completed a ride."  
 
@@ -926,9 +1093,9 @@ def gooffline():
     c.execute("""DELETE FROM OnlineDriver WHERE username = %s""",(username,))   
     conn.commit()        
     c.close()
-    conn.close()
+    
     gc.collect()
-    return "you just went offline."
+    return "You went offline."
 
 
 
@@ -946,7 +1113,7 @@ def updateme():
     c.execute("""UPDATE OnlineDriver SET longitude =%s  , latitude =%s , with_costumer = %s WHERE username = %s""",(longitude,latitude,False ,username,))
     conn.commit()
     c.close()
-    conn.close()
+    
     gc.collect()
     return "Your location has been updated."
 
