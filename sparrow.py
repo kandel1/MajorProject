@@ -2,7 +2,7 @@ import requests
 
 
 def sparrow(mobile_number,code):
-	token = 'B5HUnqePehSuUhZdaDfY'
+	token = 'PbeQPaeIWAkDPNKzbFsm'
 	sender = 'Demo'
 	to = int(mobile_number)
 	text = 'The key for your registration to Chalak is: ' + code
@@ -19,7 +19,7 @@ def sparrow(mobile_number,code):
 
 
 def sparrow2(mobile_number,password):
-	token = 'B5HUnqePehSuUhZdaDfY'
+	token = 'PbeQPaeIWAkDPNKzbFsm'
 	sender = 'Demo'
 	to = int(mobile_number)
 	text = 'The password registered to this number is ' + password
